@@ -1,5 +1,5 @@
 {
-  description = "Installable StarIntel client package for Nyxt";
+  description = "Installable modular extension package for the Nyxt browser";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -13,22 +13,25 @@
           pkgs = import nixpkgs { inherit system; };
         in {
           default = pkgs.stdenvNoCC.mkDerivation {
-            pname = "nyxt-starintel";
+            pname = "nyxt-guard";
             version = "0.1.0";
             src = self;
 
             installPhase = ''
               runHook preInstall
 
-              mkdir -p "$out/share/nyxt-starintel/src" "$out/bin"
-              cp src/*.lisp "$out/share/nyxt-starintel/src/"
-              cp loader.lisp "$out/share/nyxt-starintel/loader.lisp"
+              mkdir -p "$out/share/nyxt-guard/src" "$out/share/nyxt-guard/modules" "$out/bin"
+              cp src/*.lisp "$out/share/nyxt-guard/src/"
+              if ls modules/*.lisp >/dev/null 2>&1; then
+                cp modules/*.lisp "$out/share/nyxt-guard/modules/"
+              fi
+              cp loader.lisp "$out/share/nyxt-guard/loader.lisp"
 
-              substitute scripts/install.sh "$out/bin/nyxt-starintel-install" \
-                --replace-fail '@PACKAGE_ROOT@' "$out/share/nyxt-starintel"
-              substitute scripts/uninstall.sh "$out/bin/nyxt-starintel-uninstall" \
-                --replace-fail '@PACKAGE_ROOT@' "$out/share/nyxt-starintel"
-              chmod +x "$out/bin/nyxt-starintel-install" "$out/bin/nyxt-starintel-uninstall"
+              substitute scripts/install.sh "$out/bin/nyxt-guard-install" \
+                --replace-fail '@PACKAGE_ROOT@' "$out/share/nyxt-guard"
+              substitute scripts/uninstall.sh "$out/bin/nyxt-guard-uninstall" \
+                --replace-fail '@PACKAGE_ROOT@' "$out/share/nyxt-guard"
+              chmod +x "$out/bin/nyxt-guard-install" "$out/bin/nyxt-guard-uninstall"
 
               runHook postInstall
             '';
@@ -38,15 +41,15 @@
       apps = forAllSystems (system: {
         default = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/nyxt-starintel-install";
+          program = "${self.packages.${system}.default}/bin/nyxt-guard-install";
         };
         install = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/nyxt-starintel-install";
+          program = "${self.packages.${system}.default}/bin/nyxt-guard-install";
         };
         uninstall = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/nyxt-starintel-uninstall";
+          program = "${self.packages.${system}.default}/bin/nyxt-guard-uninstall";
         };
       });
 
